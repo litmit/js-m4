@@ -17,6 +17,7 @@ function M4(opts) {
     for (var opt in opts) this._opts[opt] = opts[opt];
     this._opts.nestingLimit = this._opts.nestingLimit || 0;
     this._opts.extensions = this._opts.extensions || false;
+    this._opts.prefix_builtins = this._opts.prefix_builtins || false;
     this._macros = {};
     this._pending = null;
     this._macroStack = [];
@@ -42,6 +43,9 @@ M4.prototype._registerBuiltins = function () {
 };
 
 M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
+    if ( this._opts.prefix_builtins ) {
+       name = 'm4_' + name;
+    }
     this.define(name, this._makeMacro(fn, inert, dynArgs));
 };
 

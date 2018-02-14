@@ -75,12 +75,19 @@ function version() {
 function run(opts, files) {
     var output = process.stdout;
     var errored = false;
+    var m4_options = {};
+
+    if ( opts['prefix-builtins'] ) {
+       m4_options.prefix_builtins = true;
+    }
+
+    var m4 = new M4(m4_options);
+
     if (typeof opts.output !== 'undefined') {
         output = fs.createWriteStream(opts.output, {encoding: 'utf8'});
     }
     process.stdin.setEncoding('utf8');
     if (files.length === 0) files = ['-'];
-    var m4 = new M4();
     var batch = new FileBatch(files, m4, end.bind(null, m4, output));
     m4.on('warning', function (err) {
         npmlog.warn(null, err.message);
