@@ -10,40 +10,40 @@ var Sysexits = require('sysexits');
 var FileBatch = require('./file-batch.js');
 
 var knownOpts = {
-    'help': Boolean,
-    'version': Boolean,
-    'fatal-warnings': Boolean,
+    'help':            Boolean,
+    'version':         Boolean,
+    'fatal-warnings':  Boolean,
     'prefix-builtins': Boolean,
-    'quiet': Boolean,
-    'define': String,
-    'include': path,
-    'synclines': Boolean,
-    'undefine': String,
-    'source-map': path,
-    'output': path,
-    'extensions': Boolean,
-    'nesting-limit': Number,
-    'freeze-state': path,
-    'reload-state': path,
-    'debug': String
+    'quiet':           Boolean,
+    'define':          [String, Array],
+    'include':         [path,   Array],
+    'synclines':       Boolean,
+    'undefine':        [String, Array],
+    'source-map':      path,
+    'output':          path,
+    'extensions':      Boolean,
+    'nesting-limit':   Number,
+    'freeze-state':    path,
+    'reload-state':    path,
+    'debug':           String
 };
 
 var shortHands = {
-    'v': 'version',
-    'E': 'fatal-warnings',
-    'P': 'prefix-builtins',
-    'silent': 'quiet',
-    'Q': 'quiet',
-    'D': 'define',
-    'I': 'include',
-    's': 'synclines',
-    'U': 'undefine',
-    'm': 'source-map',
-    'o': 'output',
-    'L': 'nesting-limit',
-    'F': 'freeze-state',
-    'R': 'reload-state',
-    'd': 'debug'
+    'v':      '--version',
+    'E':      '--fatal-warnings',
+    'P':      '--prefix-builtins',
+    'silent': '--quiet',
+    'Q':      '--quiet',
+    'D':      '--define',
+    'I':      '--include',
+    's':      '--synclines',
+    'U':      '--undefine',
+    'm':      '--source-map',
+    'o':      '--output',
+    'L':      '--nesting-limit',
+    'F':      '--freeze-state',
+    'R':      '--reload-state',
+    'd':      '--debug'
 };
 
 function main() {
