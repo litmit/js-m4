@@ -1,4 +1,4 @@
-'use strict';
+' strict';
 
 var Transform = require('stream').Transform;
 var util = require('util');
@@ -7,6 +7,7 @@ var expand = require('./lib/expand');
 var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
 var util = require('util');
+var EOL = require('os').EOL;
 
 module.exports = M4;
 util.inherits(M4, Transform);
@@ -15,9 +16,26 @@ function M4(opts) {
     Transform.call(this, {decodeStrings: false, encoding: 'utf8'});
     this._opts = {};
     for (var opt in opts) this._opts[opt] = opts[opt];
+
+    // ensure that all used options has valid type and value
     this._opts.nestingLimit = this._opts.nestingLimit || 0;
     this._opts.extensions = this._opts.extensions || false;
-    this._opts.prefix_builtins = this._opts.prefix_builtins || false;
+    this._opts.prefix_builtins = !!opts.prefix_builtins;
+
+    var dbg_input_changes = false;
+    var dbg_print_filename = false;
+    if ( opts.debug )
+    {
+       dbg_input_changes = !!opts.debug.input_changes;
+       dbg_print_filename = !!opts.debug.print_filename;
+    }
+
+    this._opts.debug =
+    {
+       input_changes:  dbg_input_changes,
+       print_filename: dbg_print_filename
+    };
+
     this._macros = {};
     this._pending = null;
     this._macroStack = [];
@@ -30,8 +48,17 @@ function M4(opts) {
                         rightQuote: this._tokenizer._rightQuote};
     this._err = null;
     this._dnlMode = false;
+
+    this._debugStream = null;
+
     this._registerBuiltins();
+    this.on('inputEnd', onInputEnd);
 }
+
+M4.prototype.getOptions = function () {
+    return this._opts;
+};
+
 
 M4.prototype._registerBuiltins = function () {
     this._defineMacro('define', this.define.bind(this), true);
@@ -246,3 +273,30 @@ M4.prototype.changeQuote = function (lhs, rhs) {
     this._expandOpts.leftQuote = lhs;
     this._expandOpts.rightQuote = rhs;
 };
+
+M4.prototype.getDebugStream = getDebugStream;
+function getDebugStream() {
+   return this._debugStream;
+}
+
+M4.prototype.setDebugStream = setDebugStream;
+function setDebugStream(stream) {
+   var old_stream = this._debugStream;
+   this._debugStream = stream || null;
+   return old_stream;
+}
+
+M4.prototype.debug = function (msg) {
+   if ( this._debugStream )
+   {
+      this._debugStream.write('m4debug:' + msg + EOL);
+   }
+};
+
+function onInputEnd(input)
+{
+   if ( this._opts.debug.input_changes )
+   {
+      this.debug('input exhausted');
+   }
+}

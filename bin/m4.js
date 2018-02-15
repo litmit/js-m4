@@ -8,6 +8,8 @@ var fs = require('fs');
 var npmlog = require('npmlog');
 var Sysexits = require('sysexits');
 var FileBatch = require('./file-batch.js');
+var ut = require('../lib/misc.js');
+
 
 var knownOpts = {
     'help':            Boolean,
@@ -25,7 +27,8 @@ var knownOpts = {
     'nesting-limit':   Number,
     'freeze-state':    path,
     'reload-state':    path,
-    'debug':           String
+    'debug':           String,
+    'debugfile':       String
 };
 
 var shortHands = {
@@ -73,19 +76,69 @@ function version() {
 }
 
 function run(opts, files) {
-    var output = process.stdout;
+    var output, dbg_output;
     var errored = false;
     var m4_options = {};
+    var m4_dbg_options = {};
 
+    // parse and prepare options from the command line
     if ( opts['prefix-builtins'] ) {
        m4_options.prefix_builtins = true;
     }
 
-    var m4 = new M4(m4_options);
+    if ( ut.isStrValid(opts.debug) ) 
+    {
+       var dbgopts = opts.debug;
 
+       if ( dbgopts.indexOf('i') !== -1 ) 
+       {
+          dbgopts = dbgopts.replace(/i/g,'');
+          m4_dbg_options.input_changes = true;
+       }
+
+       if ( dbgopts.indexOf('f') !== -1 ) 
+       {
+          dbgopts = dbgopts.replace(/f/g,'');
+          m4_dbg_options.print_filename = true;
+       }
+
+       if ( dbgopts.length > 0 )
+       {
+          npmlog.error(null, "bad debug flags: `" + dbgopts + "'");
+          process.exit(Sysexits.USAGE);
+       }
+    }
+
+    m4_options.debug = m4_dbg_options;
+
+//console.log(m4_options);
+    var m4 = new M4(m4_options);
+//console.log(m4.getOptions());
+
+//console.log(opts);
+    // prepare debug output stream
+    if ( ut.isStrValid(opts.debugfile) ) 
+    {
+       dbg_output = fs.createWriteStream(opts.debugfile, {flags:'a', encoding: 'utf8'});
+    } 
+    else if ( opts.hasOwnProperty('debugfile') ) 
+    {
+       // when option present but filename absent then discard any debug output
+       dbg_output = null;
+    }
+    else 
+    {
+       dbg_output = process.stderr;
+    }
+    m4.setDebugStream(dbg_output);
+
+    // prepare output stream
     if (typeof opts.output !== 'undefined') {
         output = fs.createWriteStream(opts.output, {encoding: 'utf8'});
+    } else {
+        output = process.stdout;
     }
+
     process.stdin.setEncoding('utf8');
     if (files.length === 0) files = ['-'];
     var batch = new FileBatch(files, m4, end.bind(null, m4, output));
