@@ -62,6 +62,9 @@ As such this is a duplex stream you can pipe, write and read.
   * `opts` *Object* Options:
     * `nestingLimit` *Number* Maximum nested macro calls. Beware, this
       does not prevent [endless rescanning loops](http://www.gnu.org/software/m4/manual/m4.html#index-nesting-limit).
+    * `prefix_builtins` *Boolean* Internally modify all builtin macro names so 
+      they all start with the prefix `m4_`. For example, using this option, 
+      one should write `m4_define` instead of `define`, and `m4___file__` instead of `__file__`.
 
 #### Event: 'error'
 
