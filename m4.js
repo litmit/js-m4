@@ -54,8 +54,8 @@ function M4(opts) {
     // Writable stream to output debug info
     this._debugStream = null;
 
-    // Tag that prefix all errors and warning messages. 
-    // Also optionally printed in debug messages (depending on option debug.print_filename)
+    // The tag that prefix all errors and warning messages. 
+    // It also optionally printed in debug messages (depending on option debug.print_filename)
     this._inputTag = '';
 
     this._registerBuiltins();
@@ -68,6 +68,10 @@ M4.prototype.getOptions = function () {
     return this._opts;
 };
 
+M4.prototype._quoted = function(str)
+{
+   return this._expandOpts.leftQuote + str + this._expandOpts.rightQuote;
+};
 
 M4.prototype._registerBuiltins = function () {
     this._defineMacro('define', this.define.bind(this), true);
@@ -86,13 +90,14 @@ M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
     this.define(name, this._makeMacro(fn, inert, dynArgs));
 };
 
+// inert = true if macro must be recognized only with parameters
 M4.prototype._makeMacro = function (fn, inert, dynArgs) {
     if (typeof inert === 'undefined') inert = false;
     if (typeof dynArgs === 'undefined') dynArgs = false;
     return (function macro() {
         var args = Array.prototype.slice.call(arguments);
         var macroName = args.shift();
-        if (inert && args.length === 0) return '`' + macroName + '\'';
+        if (inert && args.length === 0) return this._quoted(macroName);
         if (!dynArgs && args.length > fn.length) {
             var err = new M4Error(Code.W_TOO_MANY_ARGS, macroName);
             this.emit('warning', err);
@@ -158,6 +163,7 @@ M4.prototype._processPendingMacro = function () {
     if (this._pending === null) return;
     if (this._tokenizer.peekChar() === null &&
         !this._tokenizer.isEnd()) return;
+//console.log('pending:',this._pending);
     if (this._tokenizer.peekChar() === '(')
         return this._startMacroArgs();
     var result = this._callMacro(this._pending.fn, this._pending.args);
