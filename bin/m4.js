@@ -52,10 +52,10 @@ var shortHands = {
 function main() {
     var opts = nopt(knownOpts, shortHands);
     var files = opts.argv.remain;
+
+    npmlog.heading = path.basename(process.argv[1]) + ':';
     if (opts.help) return help();
     if (opts.version) return version();
-    if (!process.stdout.isTTY)
-        npmlog.heading = path.basename(process.argv[1]);
     run(opts, files);
 }
 
@@ -66,7 +66,7 @@ function help() {
             npmlog.error(null, err.message);
             process.exit(Sysexits.IOERR);
         }
-        process.stderr.write(data);
+        process.stdout.write(data);
     });
 }
 
@@ -89,6 +89,11 @@ function run(opts, files) {
     if ( ut.isStrValid(opts.debug) ) 
     {
        var dbgopts = opts.debug;
+
+       if ( dbgopts.indexOf('V') !== -1 ) 
+       {
+          dbgopts = 'fi' + dbgopts.replace(/V/g,'');
+       }
 
        if ( dbgopts.indexOf('i') !== -1 ) 
        {
@@ -116,21 +121,9 @@ function run(opts, files) {
 //console.log(m4.getOptions());
 
 //console.log(opts);
+
     // prepare debug output stream
-    if ( ut.isStrValid(opts.debugfile) ) 
-    {
-       dbg_output = fs.createWriteStream(opts.debugfile, {flags:'a', encoding: 'utf8'});
-    } 
-    else if ( opts.hasOwnProperty('debugfile') ) 
-    {
-       // when option present but filename absent then discard any debug output
-       dbg_output = null;
-    }
-    else 
-    {
-       dbg_output = process.stderr;
-    }
-    m4.setDebugStream(dbg_output);
+    m4.setDebugFile(opts.debugfile);
 
     // prepare output stream
     if (typeof opts.output !== 'undefined') {

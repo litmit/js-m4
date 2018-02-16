@@ -44,7 +44,6 @@ FileBatch.prototype._processNext = function (ix) {
         self.emit('done');
     });
     input.on('end', function () {
-        self._output.emit('inputEnd',input);
         input.unpipe(self._output);
         return self._processNext(ix + 1);
     });

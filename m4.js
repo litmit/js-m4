@@ -8,6 +8,8 @@ var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
 var util = require('util');
 var EOL = require('os').EOL;
+var fs = require('fs');
+var ut = require('./lib/misc.js');
 
 module.exports = M4;
 util.inherits(M4, Transform);
@@ -49,10 +51,17 @@ function M4(opts) {
     this._err = null;
     this._dnlMode = false;
 
+    // Writable stream to output debug info
     this._debugStream = null;
 
+    // Tag that prefix all errors and warning messages. 
+    // Also optionally printed in debug messages (depending on option debug.print_filename)
+    this._inputTag = '';
+
     this._registerBuiltins();
-    this.on('inputEnd', onInputEnd);
+
+    this.on('pipe', onPipe);
+    this.on('unpipe', onUnPipe);
 }
 
 M4.prototype.getOptions = function () {
@@ -67,6 +76,7 @@ M4.prototype._registerBuiltins = function () {
     this._defineMacro('divnum', this.divnum.bind(this));
     this._defineMacro('dnl', this.dnl.bind(this));
     this._defineMacro('changequote', this.changeQuote.bind(this));
+    this._defineMacro('debugfile', this.setDebugFile.bind(this));
 };
 
 M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
@@ -286,17 +296,110 @@ function setDebugStream(stream) {
    return old_stream;
 }
 
+//--------------------------------------------------------------------
+//   Sends all further debug and trace output to file, opened in append mode. 
+// If file is the empty string, debug and trace output are discarded. 
+// If debugfile is called without any arguments, 
+// debug and trace output are sent to standard error.
+//
+// NOT IMPLEMENTED:
+//    If file cannot be opened, the current debug file is unchanged, and an error is issued.
+M4.prototype.setDebugFile = setDebugFile;
+function setDebugFile(file) 
+{
+   var dbg_stream;
+
+   if ( file === null || typeof file === 'undefined' )
+   {
+      dbg_stream = process.stderr;
+   }
+   else
+   {
+      if ( typeof file !== 'string' )
+      {
+         throw new TypeError('file name must be a string');
+      }
+
+      if ( file.length > 0 ) 
+      {
+         dbg_stream = fs.createWriteStream(file, {flags:'a', encoding: 'utf8'});
+      } 
+      else // file name is empty string
+      {
+         // discard any debug output
+         dbg_stream = null;
+      }
+   }
+
+   if ( dbg_stream )
+   {
+      dbg_stream.on('error', onDebugStreamError);
+   }
+
+   var old_stream = this.setDebugStream(dbg_stream);
+   if ( old_stream )
+   {
+      old_stream.removeListener('error', onDebugStreamError);
+      if ( old_stream !== process.stdout && old_stream !== process.stderr )
+      {
+         old_stream.end();
+      }
+   }
+}
+
+// TODO: need more smart handler
+function onDebugStreamError(err)
+{
+   throw err;
+}
+
 M4.prototype.debug = function (msg) {
    if ( this._debugStream )
    {
-      this._debugStream.write('m4debug:' + msg + EOL);
+      this._debugStream.write('m4debug:');
+      if ( this._opts.debug.print_filename && this._inputTag.length > 0 )
+      {
+         this._debugStream.write(this._inputTag);
+         this._debugStream.write(':');
+      }
+      this._debugStream.write(' ');
+      this._debugStream.write(msg);
+      this._debugStream.write(EOL);
    }
 };
 
-function onInputEnd(input)
+function onPipe(input)
+{
+   var info_str, tag;
+
+   if ( ut.isStrValid(input.path) )
+   {
+      tag = input.path;
+      info_str = 'file \'' + input.path + '\'';
+   }
+   else if ( input === process.stdin )
+   {
+      info_str = tag = 'stdin';
+   }
+   else
+   {
+      info_str = tag = 'stream';
+   }
+
+   if ( this._opts.debug.input_changes )
+   {
+      this._inputTag = '';
+      this.debug('input read from ' + info_str);
+   }
+
+   this._inputTag = tag;
+}
+
+function onUnPipe(input)
 {
    if ( this._opts.debug.input_changes )
    {
       this.debug('input exhausted');
    }
 }
+
