@@ -79,48 +79,37 @@ function run(opts, files) {
     var output, dbg_output;
     var errored = false;
     var m4_options = {};
-    var m4_dbg_options = {};
 
     // parse and prepare options from the command line
     if ( opts['prefix-builtins'] ) {
        m4_options.prefix_builtins = true;
     }
-
-    if ( ut.isStrValid(opts.debug) ) 
-    {
-       var dbgopts = opts.debug;
-
-       if ( dbgopts.indexOf('V') !== -1 ) 
-       {
-          dbgopts = 'fi' + dbgopts.replace(/V/g,'');
-       }
-
-       if ( dbgopts.indexOf('i') !== -1 ) 
-       {
-          dbgopts = dbgopts.replace(/i/g,'');
-          m4_dbg_options.input_changes = true;
-       }
-
-       if ( dbgopts.indexOf('f') !== -1 ) 
-       {
-          dbgopts = dbgopts.replace(/f/g,'');
-          m4_dbg_options.print_filename = true;
-       }
-
-       if ( dbgopts.length > 0 )
-       {
-          npmlog.error(null, "bad debug flags: `" + dbgopts + "'");
-          process.exit(Sysexits.USAGE);
-       }
-    }
-
-    m4_options.debug = m4_dbg_options;
-
+    
 //console.log(m4_options);
     var m4 = new M4(m4_options);
 //console.log(m4.getOptions());
 
 //console.log(opts);
+
+    // process debug flags
+    if ( ut.isString(opts.debug) ) 
+    {
+       var dbgopts = opts.debug;
+       if ( dbgopts === '' ) 
+       {
+          dbgopts = 'aeq';
+       }
+
+       try
+       {
+          m4.setDebugOptions(dbgopts);
+       }
+       catch(err)
+       {
+          npmlog.error(null, err.message);
+          process.exit(Sysexits.USAGE);
+       }
+    }
 
     // prepare debug output stream
     m4.setDebugFile(opts.debugfile);

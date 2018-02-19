@@ -24,19 +24,12 @@ function M4(opts) {
     this._opts.extensions = this._opts.extensions || false;
     this._opts.prefix_builtins = !!opts.prefix_builtins;
 
-    var dbg_input_changes = false;
-    var dbg_print_filename = false;
+    this._opts.debug = {};
+    this.setDebugOptions(false);
     if ( opts.debug )
     {
-       dbg_input_changes = !!opts.debug.input_changes;
-       dbg_print_filename = !!opts.debug.print_filename;
+       this.setDebugOptions(opts.debug);
     }
-
-    this._opts.debug =
-    {
-       input_changes:  dbg_input_changes,
-       print_filename: dbg_print_filename
-    };
 
     this._macros = {};
     this._pending = null;
@@ -291,9 +284,10 @@ M4.prototype.changeQuote = function (lhs, rhs) {
     this._expandOpts.rightQuote = rhs;
 };
 
-M4.prototype.getDebugStream = debug_features.getDebugStream;
-M4.prototype.setDebugStream = debug_features.setDebugStream;
-M4.prototype.setDebugFile = debug_features.setDebugFile;
+M4.prototype.getDebugStream  = debug_features.getDebugStream;
+M4.prototype.setDebugStream  = debug_features.setDebugStream;
+M4.prototype.setDebugFile    = debug_features.setDebugFile;
+M4.prototype.setDebugOptions = debug_features.setDebugOptions;
 M4.prototype.debug = debug_features.debug;
 
 function onPipe(input)
