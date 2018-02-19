@@ -94,7 +94,6 @@ M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
     this.define(name, this._makeMacro(fn, inert, dynArgs));
 };
 
-// inert = true if macro must be recognized only with parameters
 M4.prototype._makeMacro = function (fn, inert, dynArgs) {
     if (typeof inert === 'undefined') inert = false;
     if (typeof dynArgs === 'undefined') dynArgs = false;
