@@ -5,8 +5,11 @@ var util = require('util');
 var Tokenizer = require('./lib/tokenizer');
 var expand = require('./lib/expand');
 var M4Error = require('./lib/m4-error');
-var debug_features = require('./lib/m4-debug');
 var Code = M4Error.Code;
+var builtins = require('./lib/builtins');
+var expand = require('./lib/expand');
+var debug_features = require('./lib/m4-debug');
+
 var util = require('util');
 var fs = require('fs');
 var ut = require('./lib/misc.js');
@@ -75,6 +78,13 @@ M4.prototype._registerBuiltins = function () {
     this._defineMacro('dnl', this.dnl.bind(this));
     this._defineMacro('changequote', this.changeQuote.bind(this));
     this._defineMacro('debugfile', this.setDebugFile.bind(this));
+
+    for (var builtin in builtins)
+    {
+       var builtinDef = builtins[builtin];
+       this._defineMacro(builtin, builtinDef.fn.bind(this),
+                         builtinDef.inert, builtinDef.dynArgs);
+    }
 };
 
 M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
