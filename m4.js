@@ -297,7 +297,39 @@ M4.prototype.getDebugStream  = debug_features.getDebugStream;
 M4.prototype.setDebugStream  = debug_features.setDebugStream;
 M4.prototype.setDebugFile    = debug_features.setDebugFile;
 M4.prototype.setDebugOptions = debug_features.setDebugOptions;
-M4.prototype.debug = debug_features.debug;
+M4.prototype.debug           = debug_features.debug;
+
+// Should handle all m4 related errors
+// and separate it to warnings and fatal errors
+function error(tag/*,args*/) 
+{
+   var code = M4Error.Code[tag];
+   var args = Array.prototype.slice.call(arguments,1);
+   var err = Object.create(M4Error.prototype);
+   M4Error.apply(err, [code].concat(args));
+
+   //err.m4 = this;
+
+   // as described in https://nodejs.org/api/errors.html#errors_error_code
+   // error.code should be string
+   err.errno = err.code;
+   err.code = tag;
+
+   var context = '';
+
+   if ( this._inputTag.length > 0 )
+   {
+      context += this._inputTag;
+      context += ':';
+   }
+   err.context = context;
+
+   Error.captureStackTrace(err, error);
+
+   this.emit('warning', err);
+}
+
+M4.prototype.error = error;
 
 function onPipe(input)
 {

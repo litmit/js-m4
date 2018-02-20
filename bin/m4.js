@@ -121,12 +121,12 @@ function run(opts, files) {
         output = process.stdout;
     }
 
+    // handle M4 specific input warnings
+    m4.on('warning', onM4Warning);
+
     process.stdin.setEncoding('utf8');
     if (files.length === 0) files = ['-'];
     var batch = new FileBatch(files, m4, end.bind(null, m4, output));
-    m4.on('warning', function (err) {
-        npmlog.warn(null, err.message);
-    });
     batch.on('error', function (err) {
         npmlog.error(err.source === 'output' ? 'm4' : 'input',
                      err.inner.message);
@@ -142,10 +142,18 @@ function run(opts, files) {
     });
 }
 
+function onM4Warning(warn) 
+{
+//console.log(warn)
+   var context = warn.context || null;
+   npmlog.warn(context, warn.message);
+   //npmlog.info(null, warn.stack);
+}
+
 function end(m4, output, errored) {
     if (!errored) m4.end();
     if (output !== process.stdout) output.end();
-    if (errored) process.exit(1);
+    if (errored) process.exit(Sysexits.GENERAL);
 }
 
 main();
