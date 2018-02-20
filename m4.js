@@ -17,7 +17,7 @@ var ut = require('./lib/misc.js');
 module.exports = M4;
 util.inherits(M4, Transform);
 
-function M4(opts) {
+function M4(opts/*opt*/) {
     Transform.call(this, {decodeStrings: false, encoding: 'utf8'});
     this._opts = {};
     for (var opt in opts) this._opts[opt] = opts[opt];
@@ -25,11 +25,11 @@ function M4(opts) {
     // ensure that all used options has valid type and value
     this._opts.nestingLimit = this._opts.nestingLimit || 0;
     this._opts.extensions = this._opts.extensions || false;
-    this._opts.prefix_builtins = !!opts.prefix_builtins;
+    this._opts.prefix_builtins = !!this._opts.prefix_builtins;
 
     this._opts.debug = {};
     this.setDebugOptions(false);
-    if ( opts.debug )
+    if ( ut.isObject(opts) && opts.hasOwnProperty('debug') )
     {
        this.setDebugOptions(opts.debug);
     }
