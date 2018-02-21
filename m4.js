@@ -34,7 +34,7 @@ function M4(opts/*opt*/) {
        this.setDebugOptions(opts.debug);
     }
 
-    this._macros = {};
+    this._macros = Object.create(null);
     this._pending = null;
     this._macroStack = [];
     this._buffers = [];
@@ -179,7 +179,7 @@ M4.prototype._processToken = function (token) {
         /\s/.test(token.value)) return;
     this._skipWhitespace = false;
     if (token.type === Tokenizer.Type.NAME &&
-        this._macros.hasOwnProperty(token.value)) {
+        this._macros[token.value]) {
         this._pending = this._makeMacroCall(token.value);
         return;
     }

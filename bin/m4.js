@@ -130,6 +130,10 @@ function run(opts, files) {
     batch.on('error', function (err) {
         npmlog.error(err.source === 'output' ? 'm4' : 'input',
                      err.inner.message);
+        if ( err.source === 'output' )
+        {
+           npmlog.info(null, err.inner.stack);
+        }
         errored = true;
     });
     m4.pipe(output, {end: false});
