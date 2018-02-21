@@ -1,0 +1,8 @@
+# http://www.gnu.org/software/m4/manual/m4.html#Indir
+define(`$$internal$macro', `Internal macro (name `$0')')
+$$internal$macro
+indir(`$$internal$macro')
+define(`f', `1')
+f(define(`f', `2'))
+indir(`f', define(`f', `3'))
+indir(`f', undefine(`f'))
