@@ -6,7 +6,6 @@ var Tokenizer = require('./lib/tokenizer');
 var expand = require('./lib/expand');
 var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
-var builtins = require('./lib/builtins');
 var expand = require('./lib/expand');
 var debug_features = require('./lib/m4-debug');
 
@@ -65,45 +64,35 @@ M4.prototype.getOptions = function () {
     return this._opts;
 };
 
+M4.prototype._builtins = require('./lib/builtins');
+
 M4.prototype._quoted = function(str)
 {
    return this._expandOpts.leftQuote + str + this._expandOpts.rightQuote;
 };
 
-M4.prototype._registerBuiltins = function () {
-    this._defineMacro('define', this.define.bind(this), true);
-    this._defineMacro('divert', this.divert.bind(this));
-    this._defineMacro('undivert', this.undivert.bind(this), false, true);
-    this._defineMacro('divnum', this.divnum.bind(this));
-    this._defineMacro('dnl', this.dnl.bind(this));
-    this._defineMacro('changequote', this.changeQuote.bind(this));
-    this._defineMacro('debugfile', this.setDebugFile.bind(this));
-
-    for (var builtin in builtins)
-    {
-       var builtinDef = builtins[builtin];
-       this._defineMacro(builtin, builtinDef.fn.bind(this),
-                         builtinDef.inert, builtinDef.dynArgs);
-    }
-};
-
-M4.prototype._defineMacro = function (name, fn, inert, dynArgs) {
-    if ( this._opts.prefix_builtins ) {
-       name = 'm4_' + name;
-    }
-    this.define(name, this._makeMacro(fn, inert, dynArgs));
+M4.prototype._registerBuiltins = function ()
+{
+   for ( var builtin in this._builtins )
+   {
+      var builtinDescr = this._builtins[builtin];
+      var name = builtinDescr.name;
+      if ( this._opts.prefix_builtins )
+      {
+         name = 'm4_' + name;
+      }
+      this.define(name, this._makeMacro(builtinDescr.fn.bind(this),
+                        builtinDescr.inert, builtinDescr.dynArgs));
+   }
 };
 
 M4.prototype._makeMacro = function (fn, inert, dynArgs) {
-    if (typeof inert === 'undefined') inert = false;
-    if (typeof dynArgs === 'undefined') dynArgs = false;
     return (function macro() {
         var args = Array.prototype.slice.call(arguments);
         var macroName = args.shift();
         if (inert && args.length === 0) return this._quoted(macroName);
         if (!dynArgs && args.length > fn.length) {
-            var err = new M4Error(Code.W_TOO_MANY_ARGS, macroName);
-            this.emit('warning', err);
+            this.error('M4_TOO_MANY_ARGS', macroName, fn.length);
         }
         var res = fn.apply(null, args);
         if (typeof res === 'undefined') return '';
@@ -137,7 +126,7 @@ M4.prototype._flush = function (cb) {
     this._tokenizer.end();
     this._transform('', null, (function (err) {
         if (err) return cb(err);
-        this.divert();
+        this.divert(); // WTF?
         this._undivertAll();
         return cb();
     }).bind(this));
@@ -238,32 +227,6 @@ M4.prototype.divert = function (ix) {
     }
 };
 
-M4.prototype.undivert = function () {
-    var ics = Array.prototype.slice.call(arguments);
-    if (ics.length === 0) {
-        this._undivertAll();
-        return;
-    }
-    while (ics.length > 0) {
-        var arg = ics.pop();
-        if (arg === '') continue;
-        var i = +arg;
-        if (i + '' === arg) {
-            this._undivert(+i);
-        } else {
-            if (this._opts.extensions) {
-                throw new Error('not implemented');
-            } else {
-                this.emit('warning', new M4Error(Code.W_TXT_UNDIV, arg));
-            }
-        }
-    }
-};
-
-M4.prototype.divnum = function () {
-    return this._divertIx;
-};
-
 M4.prototype._undivertAll = function () {
     for (var i = 1; i <= this._diversions.length; ++i) {
         this._undivert(i);
@@ -275,10 +238,6 @@ M4.prototype._undivert = function (i) {
     if (typeof this._diversions[i - 1] === 'undefined') return;
     this._pushOutput(this._diversions[i - 1]);
     delete this._diversions[i - 1];
-};
-
-M4.prototype.dnl = function () {
-    this._dnlMode = true;
 };
 
 M4.prototype.changeQuote = function (lhs, rhs) {

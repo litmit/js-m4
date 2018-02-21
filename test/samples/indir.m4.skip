@@ -6,3 +6,7 @@ define(`f', `1')
 f(define(`f', `2'))
 indir(`f', define(`f', `3'))
 indir(`f', undefine(`f'))
+indir(`builtin')
+define(`builtin',`none')
+indir(`builtin')
+
