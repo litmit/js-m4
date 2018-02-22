@@ -1,0 +1,11 @@
+# https://www.gnu.org/software/m4/manual/m4.html#Undefine
+1 foo bar blah
+2 
+3 some other text
+4 
+5 foo other text
+6 
+7 foo bar blah
+8 
+9 f:f:f:hello world
+10 f(bye)
