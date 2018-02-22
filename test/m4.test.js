@@ -2,7 +2,6 @@
 
 var test = require('tape');
 var M4 = require('..');
-var M4Error = require('../lib/m4-error');
 var fs = require('fs');
 var path = require('path');
 
@@ -34,24 +33,26 @@ fs.readdir(smPath, function (err, files) {
     files.forEach(function (file) {
         if (path.extname(file) !== '.m4') return;
         file = path.basename(file, '.m4');
-        test('[m4] ' + file, function (t) {
-            var filePath = path.join(smPath, file);
-            var input = fs.createReadStream(filePath + '.m4', opt);
-            var ref = fs.createReadStream(filePath, opt);
-            var output = input.pipe(new M4());
-            streamEqual(t, output, ref, function () {
-                t.end();
-            });
-        });
+        var filePath = path.join(smPath, file);
+
+        test('[m4] ' + file, function (t) { testM4(t,filePath); } );
     });
 });
 
-test('[m4] nesting limit', function (t) {
-    t.plan(1);
-    var output = new M4({nestingLimit: 2});
-    output.on('error', function (err) {
-        t.equal(err.code, M4Error.Code.E_NEST_LIMIT);
-    });
-    output.write('define(foo, define(bar, define(glo, 0)))');
-    output.end();
-});
+
+function testM4(t, filePath) 
+{
+   var options;
+   var input = fs.createReadStream(filePath + '.m4', opt);
+   var ref = fs.createReadStream(filePath, opt);
+
+   var optionsFilePath = filePath + '.options.json';
+   if ( fs.existsSync(optionsFilePath) )
+   {
+      var json = fs.readFileSync(optionsFilePath,opt);
+      options = JSON.parse(json);
+   }
+   var output = input.pipe(new M4(options));
+
+   streamEqual(t, output, ref, function () { t.end(); });
+}
