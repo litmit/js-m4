@@ -6,7 +6,6 @@ var Tokenizer = require('./lib/tokenizer');
 var expand = require('./lib/expand');
 var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
-var expand = require('./lib/expand');
 var debug_features = require('./lib/m4-debug');
 var BuiltinDescr = require('./lib/builtin-helpers.js').BuiltinDescr;
 
@@ -67,7 +66,7 @@ M4.prototype.getOptions = function () {
 
 M4.prototype._builtins = require('./lib/builtins');
 
-M4.prototype._quoted = function(str)
+M4.prototype.quoted = function(str)
 {
    return this._expandOpts.leftQuote + str + this._expandOpts.rightQuote;
 };
@@ -90,7 +89,8 @@ M4.prototype._makeMacro = function (builtinDescr)
 {
     return (function macro() {
         var args = Array.prototype.slice.call(arguments);
-        return builtinDescr.invoke(this, args);
+        var m4 = args.shift();
+        return builtinDescr.invoke(m4, args);
     }).bind(this);
 };
 
@@ -176,7 +176,7 @@ M4.prototype._processToken = function (token) {
 };
 
 M4.prototype._makeMacroCall = function (name) {
-    return {fn: this._macros[name], args: [name], parens: 0};
+    return {fn: this._macros[name], args: [this,name], parens: 0};
 };
 
 M4.prototype._processLiteralInMacro = function (macro, token) {

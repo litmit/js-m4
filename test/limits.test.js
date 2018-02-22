@@ -3,9 +3,6 @@
 var test = require('tape');
 var M4 = require('..');
 var M4Error = require('../lib/m4-error');
-//var fs = require('fs');
-//var path = require('path');
-
 
 test('[m4] nesting limit', function (t) {
     t.plan(1);

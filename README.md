@@ -79,8 +79,9 @@ may be some unwanted behavior.
 #### m4.define(name, {fn|str})
 
   * `name` *String* Identifier.
-  * `fn` *Fonction* Called with `(name, [arg1, arg2 ... ])`, must return the
+  * `fn` *Function* Called with `(m4, name, [arg1, arg2 ... ])`, must return the
     macro expansion result as a string. `name` is the macro defined name itself.
+    'm4' is reference to M4 engine.
   * `str` *String* Macro content, just like you were defining the macro in M4.
 
 Define a M4 macro as a Javascript function.
