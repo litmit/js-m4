@@ -8,6 +8,7 @@ var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
 var expand = require('./lib/expand');
 var debug_features = require('./lib/m4-debug');
+var BuiltinDescr = require('./lib/builtin-helpers.js').BuiltinDescr;
 
 var util = require('util');
 var fs = require('fs');
@@ -81,22 +82,15 @@ M4.prototype._registerBuiltins = function ()
       {
          name = 'm4_' + name;
       }
-      this.define(name, this._makeMacro(builtinDescr.fn.bind(this),
-                        builtinDescr.inert, builtinDescr.dynArgs));
+      this.define(name, this._makeMacro(builtinDescr));
    }
 };
 
-M4.prototype._makeMacro = function (fn, inert, dynArgs) {
+M4.prototype._makeMacro = function (builtinDescr)
+{
     return (function macro() {
         var args = Array.prototype.slice.call(arguments);
-        var macroName = args.shift();
-        if (inert && args.length === 0) return this._quoted(macroName);
-        if (!dynArgs && args.length > fn.length) {
-            this.error('M4_TOO_MANY_ARGS', macroName, fn.length);
-        }
-        var res = fn.apply(null, args);
-        if (typeof res === 'undefined') return '';
-        return res + '';
+        return builtinDescr.invoke(this, args);
     }).bind(this);
 };
 
@@ -252,6 +246,13 @@ M4.prototype.changeQuote = function (lhs, rhs) {
     this._expandOpts.rightQuote = rhs;
 };
 
+M4.prototype.undefine = function (name) {
+   if ( ut.isStrValid(name) )
+   {
+      delete this._macros[name];
+   }
+};
+
 M4.prototype.getDebugStream  = debug_features.getDebugStream;
 M4.prototype.setDebugStream  = debug_features.setDebugStream;
 M4.prototype.setDebugFile    = debug_features.setDebugFile;
@@ -259,7 +260,7 @@ M4.prototype.setDebugOptions = debug_features.setDebugOptions;
 M4.prototype.debug           = debug_features.debug;
 
 // Should handle all m4 related errors
-// and separate it to warnings and fatal errors
+// and separate it as warnings and fatal errors
 function error(tag/*,args*/) 
 {
    var code = M4Error.Code[tag];
@@ -270,7 +271,7 @@ function error(tag/*,args*/)
    //err.m4 = this;
 
    // as described in https://nodejs.org/api/errors.html#errors_error_code
-   // error.code should be string
+   // error.code should be a string
    err.errno = err.code;
    err.code = tag;
 
