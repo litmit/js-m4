@@ -120,7 +120,7 @@ M4.prototype._flush = function (cb) {
     this._tokenizer.end();
     this._transform('', null, (function (err) {
         if (err) return cb(err);
-        this.divert(); // WTF?
+        this.divert(0);
         this._undivertAll();
         return cb();
     }).bind(this));
@@ -222,6 +222,7 @@ M4.prototype.divert = function (ix) {
 };
 
 M4.prototype._undivertAll = function () {
+//console.log(this._diversions);
     for (var i = 1; i <= this._diversions.length; ++i) {
         this._undivert(i);
     }
@@ -261,6 +262,7 @@ M4.prototype.debug           = debug_features.debug;
 
 // Should handle all m4 related errors
 // and separate it as warnings and fatal errors
+// TODO: add more context specific info (current macro/builtin name for example)
 function error(tag/*,args*/) 
 {
    var code = M4Error.Code[tag];
