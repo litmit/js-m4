@@ -1,0 +1,26 @@
+#normal output
+now divnum is: 0
+now divnum is: 0, was: -100
+#large integers caped to [MININT,MAXINT] range
+now divnum is: 0, was: -2147483648
+normal
+test1
+normal
+now divnum is: 0
+test2
+now divnum is: 0
+test3
+normal
+normal
+now divnum is: 199999999
+test undiversion sort order for 199999999
+now divnum is: 1000000000
+test large 1000000000
+now divnum is: 2000000000
+test large 2000000000
+now divnum is: 2147483647
+test huge 5000000000
+now divnum is: 2147483647
+test large 2147483647
+now divnum is: 2147483647
+test huge 3000000000

@@ -7,6 +7,7 @@ var expand = require('./lib/expand');
 var M4Error = require('./lib/m4-error');
 var Code = M4Error.Code;
 var debug_features = require('./lib/m4-debug');
+var diversion_features = require('./lib/diversion');
 var BuiltinDescr = require('./lib/builtin-helpers.js').BuiltinDescr;
 
 var util = require('util');
@@ -37,8 +38,13 @@ function M4(opts/*opt*/) {
     this._pending = null;
     this._macroStack = [];
     this._buffers = [];
-    this._divertIx = 0;
-    this._diversions = [];
+
+//    this._divertIx = 0;
+    this._divnum = '0';
+    this._outputDiverted = false;
+    this._outputDiscarded = false;
+    this._diversions = Object.create(null);
+
     this._skipWhitespace = false;
     this._tokenizer = new Tokenizer();
     this._expandOpts = {ext: true, leftQuote: this._tokenizer._leftQuote,
@@ -120,8 +126,8 @@ M4.prototype._flush = function (cb) {
     this._tokenizer.end();
     this._transform('', null, (function (err) {
         if (err) return cb(err);
-        this.divert(0);
-        this._undivertAll();
+        this.divert(); // need to switch back to standard output
+        this.undivert();
         return cb();
     }).bind(this));
 };
@@ -198,11 +204,19 @@ M4.prototype._processLiteralInMacro = function (macro, token) {
     return false;
 };
 
-M4.prototype._pushOutput = function (output) {
-    if (this._divertIx < 0) return;
-    if (this._divertIx === 0)
-        return this.push(output);
-    this._diversions[this._divertIx - 1] += output;
+M4.prototype._pushOutput = function (output) 
+{
+   if ( !this._outputDiscarded )
+   {
+      if ( this._outputDiverted )
+      {
+         this._diversions[this._divnum].write(output);
+      }
+      else
+      {
+         this.push(output);
+      }
+   }
 };
 
 M4.prototype.define = function (name, fn) {
@@ -213,26 +227,11 @@ M4.prototype.define = function (name, fn) {
     this._macros[name] = fn;
 };
 
-M4.prototype.divert = function (ix) {
-    if (ix === null || typeof ix === 'undefined') ix = 0;
-    this._divertIx = +ix;
-    if (typeof this._diversions[this._divertIx - 1] === 'undefined') {
-        this._diversions[this._divertIx - 1] = '';
-    }
-};
-
-M4.prototype._undivertAll = function () {
-//console.log(this._diversions);
-    for (var i = 1; i <= this._diversions.length; ++i) {
-        this._undivert(i);
-    }
-};
-
-M4.prototype._undivert = function (i) {
-    if (i <= 0 || this._divertIx === i) return;
-    if (typeof this._diversions[i - 1] === 'undefined') return;
-    this._pushOutput(this._diversions[i - 1]);
-    delete this._diversions[i - 1];
+M4.prototype.undefine = function (name) {
+   if ( ut.isStrValid(name) )
+   {
+      delete this._macros[name];
+   }
 };
 
 M4.prototype.changeQuote = function (lhs, rhs) {
@@ -247,12 +246,10 @@ M4.prototype.changeQuote = function (lhs, rhs) {
     this._expandOpts.rightQuote = rhs;
 };
 
-M4.prototype.undefine = function (name) {
-   if ( ut.isStrValid(name) )
-   {
-      delete this._macros[name];
-   }
-};
+M4.prototype.getDiversion = diversion_features.getDiversion;
+M4.prototype.divert       = diversion_features.divert;
+M4.prototype.undivert     = diversion_features.undivert;
+M4.prototype.divnum       = diversion_features.divnum;
 
 M4.prototype.getDebugStream  = debug_features.getDebugStream;
 M4.prototype.setDebugStream  = debug_features.setDebugStream;
