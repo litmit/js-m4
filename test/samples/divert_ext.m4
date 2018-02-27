@@ -10,19 +10,25 @@ define(`old_divnum',divnum)
 #ignored output
 divert`'now `divnum' is: divnum, was: old_divnum
 normal
-divert(5q5)dnl not a numeric warning
+divert(5q5)dnl "not a numeric" warning
 test1
 divert(5000000000)dnl
 now `divnum' is: divnum
 test huge 5000000000
-divert`'dnl
+divert(,)`'dnl
 normal
-divert(3.14)dnl not a numeric warning
+divert(3.14)dnl "not a numeric" warning
 now `divnum' is: divnum
 test2
-divert(` 314 ')dnl not a numeric warning
+divert(` 314 ')dnl "not a numeric" warning
 now `divnum' is: divnum
 test3
+divert(`+255')dnl numbers with a positive signs are allowed
+now `divnum' is: divnum
+test4
+divert(+0)`'dnl
+now `divnum' is: divnum
+normal
 divert(2147483647)dnl
 now `divnum' is: divnum
 test large 2147483647

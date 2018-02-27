@@ -246,10 +246,10 @@ M4.prototype.changeQuote = function (lhs, rhs) {
     this._expandOpts.rightQuote = rhs;
 };
 
-M4.prototype.getDiversion = diversion_features.getDiversion;
-M4.prototype.divert       = diversion_features.divert;
-M4.prototype.undivert     = diversion_features.undivert;
-M4.prototype.divnum       = diversion_features.divnum;
+M4.prototype.getDiversionInfo = diversion_features.getDiversionInfo;
+M4.prototype.getDiversion     = diversion_features.getDiversion;
+M4.prototype.divert           = diversion_features.divert;
+M4.prototype.undivert         = diversion_features.undivert;
 
 M4.prototype.getDebugStream  = debug_features.getDebugStream;
 M4.prototype.setDebugStream  = debug_features.setDebugStream;
